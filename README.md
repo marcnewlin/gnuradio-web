@@ -22,7 +22,7 @@ Support for USB software-defined radios is not yet implemented, but will be poss
 
 ### how to run a simple flowgraph with QT GUI visualization
 
-1. run ```./server.py```
+1. run ```cd webapp && ./server.py```
 2. open your web browser (and the F12 developer-tools)
 3. navigate to http://localhost:8000
 
