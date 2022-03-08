@@ -1,0 +1,369 @@
+diff --git a/gnuradio-runtime/ConfigChecks.cmake b/gnuradio-runtime/ConfigChecks.cmake
+index f80053f..97c9f17 100644
+--- a/gnuradio-runtime/ConfigChecks.cmake
++++ b/gnuradio-runtime/ConfigChecks.cmake
+@@ -15,18 +15,18 @@ ENDIF(MSVC)
+
+ GR_CHECK_HDR_N_DEF(sys/types.h HAVE_SYS_TYPES_H)
+ GR_CHECK_HDR_N_DEF(sys/mman.h HAVE_SYS_MMAN_H)
+-GR_CHECK_HDR_N_DEF(sys/ipc.h HAVE_SYS_IPC_H)
+-GR_CHECK_HDR_N_DEF(sys/shm.h HAVE_SYS_SHM_H)
+-GR_CHECK_HDR_N_DEF(signal.h HAVE_SIGNAL_H)
++#GR_CHECK_HDR_N_DEF(sys/ipc.h HAVE_SYS_IPC_H)
++#GR_CHECK_HDR_N_DEF(sys/shm.h HAVE_SYS_SHM_H)
++#GR_CHECK_HDR_N_DEF(signal.h HAVE_SIGNAL_H)
+
+
+ ########################################################################
+-CHECK_CXX_SOURCE_COMPILES("
+-    #include <signal.h>
+-    int main(){sigaction(0, 0, 0); return 0;}
+-    " HAVE_SIGACTION
+-)
+-GR_ADD_COND_DEF(HAVE_SIGACTION)
++#CHECK_CXX_SOURCE_COMPILES("
++#    #include <signal.h>
++#    int main(){sigaction(0, 0, 0); return 0;}
++#    " HAVE_SIGACTION
++#)
++#GR_ADD_COND_DEF(HAVE_SIGACTION)
+
+ ########################################################################
+ CHECK_CXX_SOURCE_COMPILES("
+diff --git a/gnuradio-runtime/lib/constants.cc.in b/gnuradio-runtime/lib/constants.cc.in
+index 4d8e240..dd9b8d5 100644
+--- a/gnuradio-runtime/lib/constants.cc.in
++++ b/gnuradio-runtime/lib/constants.cc.in
+@@ -22,6 +22,7 @@ using std::filesystem::path;
+ namespace gr {
+ const std::string prefix()
+ {
++    return "/build";
+     // Use "GR_PREFIX" environment variable when specified
+     const char* prefix = std::getenv("GR_PREFIX");
+     if (prefix != NULL)
+diff --git a/gnuradio-runtime/python/gnuradio/gr/bindings/python_bindings.cc b/gnuradio-runtime/python/gnuradio/gr/bindings/python_bindings.cc
+index 7605782..a9d70d9 100644
+--- a/gnuradio-runtime/python/gnuradio/gr/bindings/python_bindings.cc
++++ b/gnuradio-runtime/python/gnuradio/gr/bindings/python_bindings.cc
+@@ -95,11 +95,7 @@ void bind_tpb_detail(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
+
+ PYBIND11_MODULE(gr_python, m)
+ {
+diff --git a/gr-analog/python/analog/bindings/python_bindings.cc b/gr-analog/python/analog/bindings/python_bindings.cc
+index 04969f5..c0fd20a 100644
+--- a/gr-analog/python/analog/bindings/python_bindings.cc
++++ b/gr-analog/python/analog/bindings/python_bindings.cc
+@@ -54,11 +54,12 @@ void bind_squelch_base_ff(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
++//void* init_numpy()
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(analog_python, m)
+ {
+diff --git a/gr-blocks/python/blocks/bindings/python_bindings.cc b/gr-blocks/python/blocks/bindings/python_bindings.cc
+index ee5a2e3..56ad901 100644
+--- a/gr-blocks/python/blocks/bindings/python_bindings.cc
++++ b/gr-blocks/python/blocks/bindings/python_bindings.cc
+@@ -172,11 +172,11 @@ void bind_xor_blk(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(blocks_python, m)
+ {
+diff --git a/gr-channels/python/channels/bindings/python_bindings.cc b/gr-channels/python/channels/bindings/python_bindings.cc
+index eac7e53..ddc6772 100644
+--- a/gr-channels/python/channels/bindings/python_bindings.cc
++++ b/gr-channels/python/channels/bindings/python_bindings.cc
+@@ -28,11 +28,11 @@ void bind_sro_model(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
++extern void* init_numpy();
++/*{
+     import_array();
+     return NULL;
+-}
++}*/
+
+ PYBIND11_MODULE(channels_python, m)
+ {
+diff --git a/gr-digital/python/digital/bindings/python_bindings.cc b/gr-digital/python/digital/bindings/python_bindings.cc
+index 8c6aff1..3ee2006 100644
+--- a/gr-digital/python/digital/bindings/python_bindings.cc
++++ b/gr-digital/python/digital/bindings/python_bindings.cc
+@@ -102,11 +102,12 @@ void bind_timing_error_detector_type(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++//void* init_numpy()
++extern void* init_numpy();
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(digital_python, m)
+ {
+diff --git a/gr-fft/python/fft/bindings/python_bindings.cc b/gr-fft/python/fft/bindings/python_bindings.cc
+index ea94cd7..47cc200 100644
+--- a/gr-fft/python/fft/bindings/python_bindings.cc
++++ b/gr-fft/python/fft/bindings/python_bindings.cc
+@@ -26,11 +26,11 @@ void bind_window(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(fft_python, m)
+ {
+diff --git a/gr-filter/python/filter/bindings/python_bindings.cc b/gr-filter/python/filter/bindings/python_bindings.cc
+index cd29a1c..7008647 100644
+--- a/gr-filter/python/filter/bindings/python_bindings.cc
++++ b/gr-filter/python/filter/bindings/python_bindings.cc
+@@ -65,11 +65,11 @@ void bind_single_pole_iir_filter_ff(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(filter_python, m)
+ {
+diff --git a/gr-pdu/python/pdu/bindings/python_bindings.cc b/gr-pdu/python/pdu/bindings/python_bindings.cc
+index b5ed80e..e111e12 100644
+--- a/gr-pdu/python/pdu/bindings/python_bindings.cc
++++ b/gr-pdu/python/pdu/bindings/python_bindings.cc
+@@ -32,11 +32,12 @@ void bind_time_delta(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
++extern void* init_numpy();
++/*void* init_numpy()
+ {
+     import_array();
+     return NULL;
+-}
++}*/
+
+ PYBIND11_MODULE(pdu_python, m)
+ {
+diff --git a/gr-qtgui/python/qtgui/bindings/python_bindings.cc b/gr-qtgui/python/qtgui/bindings/python_bindings.cc
+index 3650a2b..c49abfb 100644
+--- a/gr-qtgui/python/qtgui/bindings/python_bindings.cc
++++ b/gr-qtgui/python/qtgui/bindings/python_bindings.cc
+@@ -69,11 +69,11 @@ void bind_waterfalldisplayform(py::module&);
+ // for newer Python versions.
+ // This function is also necessary because it ensures access to the C API
+ // and removes a warning.
+-void* init_numpy()
+-{
+-    import_array();
+-    return NULL;
+-}
++extern void* init_numpy();
++//{
++//    import_array();
++//    return NULL;
++//}
+
+ PYBIND11_MODULE(qtgui_python, m)
+ {
+diff --git a/grc/core/utils/extract_docs.py b/grc/core/utils/extract_docs.py
+index a92ce17..9b3906b 100644
+--- a/grc/core/utils/extract_docs.py
++++ b/grc/core/utils/extract_docs.py
+@@ -9,7 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
+
+ import sys
+ import re
+-import subprocess
++#import subprocess
+ import threading
+ import json
+ import random
+diff --git a/grc/gui_qt/Platform.py b/grc/gui_qt/Platform.py
+index ce3e0b1..abe0999 100644
+--- a/grc/gui_qt/Platform.py
++++ b/grc/gui_qt/Platform.py
+@@ -28,6 +28,8 @@ class Platform(CorePlatform):
+
+         # Ensure conf directories
+         gui_prefs_file = self.config.gui_prefs_file
++        print("gui_prefs_file: %s" % gui_prefs_file)
++        gui_prefs_file = "~/.grc_gui_prefs"
+         if not os.path.exists(os.path.dirname(gui_prefs_file)):
+             os.mkdir(os.path.dirname(gui_prefs_file))
+
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index 775bd66..fcd105c 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -21,13 +21,13 @@ from __future__ import absolute_import, print_function
+ import logging
+ import os
+ import sys
+-import subprocess
++#import subprocess
+
+ # Third-party  modules
+ import six
+
+ from PyQt5 import QtCore, QtGui, QtWidgets
+-from PyQt5.Qt import Qt
++#from PyQt5.Qt import Qt
+ from PyQt5.QtGui import QStandardItemModel
+
+ # Custom modules
+.
+diff --git a/gr-qtgui/lib/CMakeLists.txt b/gr-qtgui/lib/CMakeLists.txt
+index 69400ab..a3c0aee 100644
+--- a/gr-qtgui/lib/CMakeLists.txt
++++ b/gr-qtgui/lib/CMakeLists.txt
+@@ -61,7 +61,8 @@ add_library(gnuradio-qtgui
+     vector_sink_f_impl.cc
+     edit_box_msg_impl.cc
+ )
+-target_compile_definitions(gnuradio-qtgui PRIVATE -DQWT_DLL) #setup QWT library linkage
++#target_compile_definitions(gnuradio-qtgui) #setup QWT library linkage
++#target_compile_definitions(gnuradio-qtgui PRIVATE -DQWT_DLL) #setup QWT library linkage
+ target_include_directories(gnuradio-qtgui
+   PUBLIC
+   $<INSTALL_INTERFACE:include>
+
+diff --git a/gr-qtgui/python/qtgui/CMakeLists.txt b/gr-qtgui/python/qtgui/CMakeLists.txt
+index b7c4817..762336c 100644
+--- a/gr-qtgui/python/qtgui/CMakeLists.txt
++++ b/gr-qtgui/python/qtgui/CMakeLists.txt
+@@ -8,7 +8,7 @@
+ ########################################################################
+ include(GrPython)
+
+-set(PY_QT_IMPORT "from PyQt5 import Qt, QtCore, QtWidgets")
++set(PY_QT_IMPORT "from PyQt5 import QtGui as Qt, QtCore, QtWidgets")
+
+ configure_file(range.py.cmakein "${CMAKE_CURRENT_BINARY_DIR}/range.py" @ONLY)
+ configure_file(util.py.cmakein "${CMAKE_CURRENT_BINARY_DIR}/util.py" @ONLY)
+.
+diff --git a/gr-qtgui/python/qtgui/compass.py b/gr-qtgui/python/qtgui/compass.py
+index f1cdabf..3f457db 100644
+--- a/gr-qtgui/python/qtgui/compass.py
++++ b/gr-qtgui/python/qtgui/compass.py
+@@ -17,7 +17,7 @@ import pmt
+ # First Qt and 2nd Qt are different.  You'll get errors if they're both not available,
+ # hence the import-as to avoid name collisions
+
+-from PyQt5 import Qt
++from PyQt5 import QtGui as Qt
+ from PyQt5.QtCore import Qt as Qtc
+ from PyQt5.QtCore import pyqtSignal, QPoint, pyqtProperty
+ from PyQt5.QtWidgets import QFrame, QWidget, QVBoxLayout, QHBoxLayout, QLabel
+diff --git a/gr-qtgui/python/qtgui/dialcontrol.py b/gr-qtgui/python/qtgui/dialcontrol.py
+index 1c70771..26f6c45 100644
+--- a/gr-qtgui/python/qtgui/dialcontrol.py
++++ b/gr-qtgui/python/qtgui/dialcontrol.py
+@@ -10,7 +10,7 @@
+ #
+
+ from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel
+-from PyQt5 import Qt
++from PyQt5 import QtWidgets as Qt
+ from PyQt5.QtCore import Qt as Qtc
+ from PyQt5.QtCore import QSize
+ from gnuradio import gr
+diff --git a/gr-qtgui/python/qtgui/msgcheckbox.py b/gr-qtgui/python/qtgui/msgcheckbox.py
+index d1fde95..699e884 100644
+--- a/gr-qtgui/python/qtgui/msgcheckbox.py
++++ b/gr-qtgui/python/qtgui/msgcheckbox.py
+@@ -9,7 +9,7 @@
+ #
+ #
+
+-from PyQt5 import Qt
++from PyQt5 import QtWidgets as Qt
+ from PyQt5.QtWidgets import QFrame, QVBoxLayout
+ from PyQt5.QtCore import Qt as Qtc
+
+diff --git a/gr-qtgui/python/qtgui/msgpushbutton.py b/gr-qtgui/python/qtgui/msgpushbutton.py
+index 4865cc1..24a0ebd 100644
+--- a/gr-qtgui/python/qtgui/msgpushbutton.py
++++ b/gr-qtgui/python/qtgui/msgpushbutton.py
+@@ -9,7 +9,7 @@
+ #
+ #
+
+-from PyQt5 import Qt
++from PyQt5 import QtWidgets as Qt
+ from gnuradio import gr
+ import pmt
+
+diff --git a/gr-qtgui/python/qtgui/togglebutton.py b/gr-qtgui/python/qtgui/togglebutton.py
+index cfa0f91..8fb23c5 100644
+--- a/gr-qtgui/python/qtgui/togglebutton.py
++++ b/gr-qtgui/python/qtgui/togglebutton.py
+@@ -10,7 +10,7 @@
+ #
+
+
+-from PyQt5 import Qt
++from PyQt5 import QtWidgets as Qt
+ from gnuradio import gr
+ import pmt
+
+.

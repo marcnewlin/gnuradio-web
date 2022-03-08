@@ -1,0 +1,13 @@
+diff --git a/lib/volk_malloc.c b/lib/volk_malloc.c
+index 0410d29..84edb7a 100644
+--- a/lib/volk_malloc.c
++++ b/lib/volk_malloc.c
+@@ -54,6 +54,8 @@ void* volk_malloc(size_t size, size_t alignment)
+         fprintf(stderr, "VOLK: Error allocating memory: either size or alignment is 0");
+         return NULL;
+     }
++    alignment = 4;
++    return aligned_alloc(alignment, size);
+     // Tweak size to satisfy ASAN (the GCC address sanitizer).
+     // Calling 'volk_malloc' might therefor result in the allocation of more memory than
+     // requested for correct alignment. Any allocation size change here will in general

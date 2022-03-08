@@ -1,0 +1,323 @@
+diff --git a/numpy/__init__.py b/numpy/__init__.py
+index e8d1820a1..e0aa910c0 100644
+--- a/numpy/__init__.py
++++ b/numpy/__init__.py
+@@ -1,3 +1,39 @@
++import sys
++
++class StaticLazyLoader(object):
++    def __init__(self, mod_name):
++        self._mod_name = mod_name
++        self._static_mod_name  = mod_name.replace(".", "_")
++        self._cache = {}
++
++        self.__path__ = "/build/lib/python3.11/%s" % ("/".join(mod_name.replace(".", "/").split("/")[:-1]))
++
++        #print("[New] StaticLazyLoader")
++        #print(" -> %s" % self._mod_name)
++        #print(" -> %s" % self._static_mod_name)
++        #print(" -> %s" % self.__path__)
++        #print("")
++
++    def __getattr__(self, name):
++        #print("getattr %s.%s" % (self._mod_name, name))
++        setattr(self, name, getattr(__import__(self._static_mod_name, globals(), locals(), [name], 0), name))
++        #print(" -> %s" % getattr(self, name))
++        #print("")
++        return getattr(self, name)
++
++sys.modules['numpy.random._common'] = StaticLazyLoader('numpy.random._common')
++sys.modules['numpy.random.bit_generator'] = StaticLazyLoader('numpy.random.bit_generator')
++sys.modules['numpy.random.mtrand'] = StaticLazyLoader('numpy.random.mtrand')
++sys.modules['numpy.random._bounded_integers'] = StaticLazyLoader('numpy.random._bounded_integers')
++sys.modules['numpy.random._generator'] = StaticLazyLoader('numpy.random._generator')
++sys.modules['numpy.random._mt19937'] = StaticLazyLoader('numpy.random._mt19937')
++sys.modules['numpy.random._sfc64'] = StaticLazyLoader('numpy.random._sfc64')
++sys.modules['numpy.random._pcg64'] = StaticLazyLoader('numpy.random._pcg64')
++sys.modules['numpy.core._multiarray_umath'] = StaticLazyLoader('numpy.core._multiarray_umath')
++sys.modules['numpy.linalg._umath_linalg'] = StaticLazyLoader('numpy.linalg._umath_linalg')
++sys.modules['numpy.fft._pocketfft_internal'] = StaticLazyLoader('numpy.fft._pocketfft_internal')
++
++
+ """
+ NumPy
+ =====
+diff --git a/numpy/core/__init__.py b/numpy/core/__init__.py
+index b89e27f0f..e35103ec7 100644
+--- a/numpy/core/__init__.py
++++ b/numpy/core/__init__.py
+@@ -1,3 +1,7 @@
++import sys
++import _multiarray_umath
++sys.modules['numpy.core._multiarray_umath'] = _multiarray_umath
++
+ """
+ Contains the core of NumPy: ndarray, ufuncs, dtypes, etc.
+
+@@ -96,7 +100,7 @@
+
+ # do this after everything else, to minimize the chance of this misleadingly
+ # appearing in an import-time traceback
+-from . import _add_newdocs
++#from . import _add_newdocs
+ from . import _add_newdocs_scalars
+ # add these for module-freeze analysis (like PyInstaller)
+ from . import _dtype_ctypes
+diff --git a/numpy/core/setup.py b/numpy/core/setup.py
+index a5f423d8f..16031eeb9 100644
+--- a/numpy/core/setup.py
++++ b/numpy/core/setup.py
+@@ -736,6 +736,7 @@ def gl_if_msvc(build_cmd):
+             build_info={
+                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
+                 'extra_compiler_args': [gl_if_msvc],
++                'extra_link_args': ['-s EXPORT_ALL', '-shared'],
+             })
+     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
+             subst_dict)
+@@ -755,7 +756,7 @@ def gl_if_msvc(build_cmd):
+                              join('src', 'common', 'npy_argparse.h'),
+                              join('src', 'common', 'npy_hashtable.h'),
+                              join('src', 'common', 'npy_extint128.h')],
+-                    libraries=['npymath'])
++                    libraries=[])
+
+     #######################################################################
+     #             _multiarray_umath module - common part                  #
+@@ -1027,7 +1028,7 @@ def generate_umath_c(ext, build_dir):
+                                  ],
+                          depends=deps + multiarray_deps + umath_deps +
+                                 common_deps,
+-                         libraries=['npymath'],
++                         libraries=[],
+                          extra_objects=svml_objs,
+                          extra_info=extra_info,
+                          extra_cxx_compile_args=['-std=c++11',
+diff --git a/numpy/core/src/multiarray/multiarraymodule.c b/numpy/core/src/multiarray/multiarraymodule.c
+index 576c39f5d..d4020851e 100644
+--- a/numpy/core/src/multiarray/multiarraymodule.c
++++ b/numpy/core/src/multiarray/multiarraymodule.c
+@@ -4708,7 +4708,7 @@ static struct PyModuleDef moduledef = {
+ };
+
+ /* Initialization function for the module */
+-PyMODINIT_FUNC PyInit__multiarray_umath(void) {
++PyMODINIT_FUNC PyInit__multiarray_umath(void) {
+     PyObject *m, *d, *s;
+     PyObject *c_api;
+
+diff --git a/numpy/core/src/npymath/ieee754.c.src b/numpy/core/src/npymath/ieee754.c.src
+index 4e6ddb712..e3f12b4f2 100644
+--- a/numpy/core/src/npymath/ieee754.c.src
++++ b/numpy/core/src/npymath/ieee754.c.src
+@@ -8,6 +8,11 @@
+ #include "npy_math_private.h"
+ #include "numpy/utils.h"
+
++#define FE_DIVBYZERO 1
++#define FE_OVERFLOW 2
++#define FE_UNDERFLOW 4
++#define FE_INVALID 8
++
+ #ifndef HAVE_COPYSIGN
+ double npy_copysign(double x, double y)
+ {
+diff --git a/numpy/distutils/ccompiler.py b/numpy/distutils/ccompiler.py
+index 16f00d8ed..4ab73b808 100644
+--- a/numpy/distutils/ccompiler.py
++++ b/numpy/distutils/ccompiler.py
+@@ -173,7 +173,7 @@ def CCompiler_spawn(self, cmd, display=None, env=None):
+     if self.verbose:
+         forward_bytes_to_stdout(o)
+
+-    if re.search(b'Too many open files', o):
++    if re.search(b'Too many open files', o):
+         msg = '\nTry rerunning setup command until build succeeds.'
+     else:
+         msg = ''
+@@ -353,6 +353,7 @@ def single_compile(args):
+     else:
+         build_items = build.items()
+
++    jobs=1
+     if len(build) > 1 and jobs > 1:
+         # build parallel
+         import multiprocessing.pool
+diff --git a/numpy/distutils/exec_command.py b/numpy/distutils/exec_command.py
+index 79998cf5d..060ff7af1 100644
+--- a/numpy/distutils/exec_command.py
++++ b/numpy/distutils/exec_command.py
+@@ -87,7 +87,7 @@ def forward_bytes_to_stdout(val):
+     """
+     if hasattr(sys.stdout, 'buffer'):
+         # use the underlying binary output if there is one
+-        sys.stdout.buffer.write(val)
++        sys.stdout.buffer.write(val.encode())
+     elif hasattr(sys.stdout, 'encoding'):
+         # round-trip the encoding if necessary
+         sys.stdout.write(val.decode(sys.stdout.encoding))
+diff --git a/numpy/distutils/misc_util.py b/numpy/distutils/misc_util.py
+index 513be75db..f1c65ed65 100644
+--- a/numpy/distutils/misc_util.py
++++ b/numpy/distutils/misc_util.py
+@@ -1491,6 +1491,7 @@ def add_extension(self,name,sources,**kw):
+         The self.paths(...) method is applied to all lists that may contain
+         paths.
+         """
++
+         ext_args = copy.copy(kw)
+         ext_args['name'] = dot_join(self.name, name)
+         ext_args['sources'] = sources
+diff --git a/numpy/fft/__init__.py b/numpy/fft/__init__.py
+index fd5e47580..6f4d2b073 100644
+--- a/numpy/fft/__init__.py
++++ b/numpy/fft/__init__.py
+@@ -1,3 +1,7 @@
++import sys
++import _pocketfft_internal
++sys.modules['numpy.fft._pocketfft_internal'] = _pocketfft_internal
++
+ """
+ Discrete Fourier Transform (:mod:`numpy.fft`)
+ =============================================
+diff --git a/numpy/fft/_pocketfft.c b/numpy/fft/_pocketfft.c
+index 1eb2eba18..848a0df16 100644
+--- a/numpy/fft/_pocketfft.c
++++ b/numpy/fft/_pocketfft.c
+@@ -2368,7 +2368,7 @@ static struct PyModuleDef moduledef = {
+ };
+
+ /* Initialization function for the module */
+-PyMODINIT_FUNC PyInit__pocketfft_internal(void)
++PyMODINIT_FUNC PyInit__pocketfft_internal(void)
+ {
+     PyObject *m;
+     m = PyModule_Create(&moduledef);
+diff --git a/numpy/linalg/__init__.py b/numpy/linalg/__init__.py
+index 93943de38..29324aab6 100644
+--- a/numpy/linalg/__init__.py
++++ b/numpy/linalg/__init__.py
+@@ -1,3 +1,7 @@
++import sys
++import _umath_linalg
++sys.modules['numpy.linalg._umath_linalg'] = _umath_linalg
++
+ """
+ ``numpy.linalg``
+ ================
+diff --git a/numpy/linalg/setup.py b/numpy/linalg/setup.py
+index 94536bb2c..cf273caa9 100644
+--- a/numpy/linalg/setup.py
++++ b/numpy/linalg/setup.py
+@@ -72,7 +72,7 @@ def get_lapack_lite_sources(ext, build_dir):
+         sources=['umath_linalg.c.src', get_lapack_lite_sources],
+         depends=['lapack_lite/f2c.h'],
+         extra_info=lapack_info,
+-        libraries=['npymath'],
++        libraries=[],
+     )
+     config.add_data_files('*.pyi')
+     return config
+diff --git a/numpy/linalg/umath_linalg.c.src b/numpy/linalg/umath_linalg.c.src
+index f8a154445..0dda0c9c2 100644
+--- a/numpy/linalg/umath_linalg.c.src
++++ b/numpy/linalg/umath_linalg.c.src
+@@ -4396,7 +4396,7 @@ static struct PyModuleDef moduledef = {
+         NULL
+ };
+
+-PyMODINIT_FUNC PyInit__umath_linalg(void)
++PyMODINIT_FUNC PyInit__umath_linalg(void)
+ {
+     PyObject *m;
+     PyObject *d;
+diff --git a/numpy/random/__init__.py b/numpy/random/__init__.py
+index 2e8f99fe3..ed9af66dd 100644
+--- a/numpy/random/__init__.py
++++ b/numpy/random/__init__.py
+@@ -177,17 +177,17 @@
+ ]
+
+ # add these for module-freeze analysis (like PyInstaller)
+-from . import _pickle
+-from . import _common
+-from . import _bounded_integers
+-
+-from ._generator import Generator, default_rng
+-from .bit_generator import SeedSequence, BitGenerator
+-from ._mt19937 import MT19937
+-from ._pcg64 import PCG64, PCG64DXSM
+-from ._philox import Philox
+-from ._sfc64 import SFC64
+-from .mtrand import *
++#from . import _pickle
++#from . import _common
++#from . import _bounded_integers
++
++#from ._generator import Generator, default_rng
++#from .bit_generator import SeedSequence, BitGenerator
++#from ._mt19937 import MT19937
++#from ._pcg64 import PCG64, PCG64DXSM
++#from ._philox import Philox
++#from ._sfc64 import SFC64
++#from .mtrand import *
+
+ __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
+             'Philox', 'PCG64', 'PCG64DXSM', 'SFC64', 'default_rng',
+diff --git a/numpy/random/setup.py b/numpy/random/setup.py
+index 866c0cb2f..84b90333a 100644
+--- a/numpy/random/setup.py
++++ b/numpy/random/setup.py
+@@ -36,7 +36,7 @@ def generate_libraries(ext, build_dir):
+     config.add_data_dir('_examples')
+
+     EXTRA_LINK_ARGS = []
+-    EXTRA_LIBRARIES = ['npyrandom']
++    EXTRA_LIBRARIES = []
+     if os.name != 'nt':
+         # Math lib
+         EXTRA_LIBRARIES.append('m')
+@@ -130,7 +130,7 @@ def gl_if_msvc(build_cmd):
+         # gen.pyx, src/distributions/distributions.c
+         config.add_extension(gen,
+                              sources=[f'{gen}.c'],
+-                             libraries=EXTRA_LIBRARIES + ['npymath'],
++                             libraries=EXTRA_LIBRARIES + [],
+                              extra_compile_args=EXTRA_COMPILE_ARGS,
+                              include_dirs=['.', 'src'],
+                              extra_link_args=EXTRA_LINK_ARGS,
+@@ -138,7 +138,7 @@ def gl_if_msvc(build_cmd):
+                              define_macros=defs,
+                              )
+     config.add_data_files('_bounded_integers.pxd')
+-    mtrand_libs = ['m', 'npymath'] if os.name != 'nt' else ['npymath']
++    mtrand_libs = ['m'] if os.name != 'nt' else []
+     config.add_extension('mtrand',
+                          sources=['mtrand.c',
+                                   'src/legacy/legacy-distributions.c',
+diff --git a/setup.py b/setup.py
+index 703fe79e1..bd82e3f3d 100755
+--- a/setup.py
++++ b/setup.py
+@@ -233,6 +233,7 @@ def generate_cython():
+                              os.path.join(cwd, 'tools', 'cythonize.py'),
+                              'numpy/{0}'.format(d)],
+                             cwd=cwd)
++        os.system('cd /opt/numpy && /build/bin/python3.11 generate-numpy-setup-local.py')
+         if p != 0:
+             raise RuntimeError("Running cythonize failed!")
+
+diff --git a/tools/cythonize.py b/tools/cythonize.py
+index c06962cf9..cb5cb221f 100755
+--- a/tools/cythonize.py
++++ b/tools/cythonize.py
+@@ -44,7 +44,7 @@
+ # Rules
+ #
+ def process_pyx(fromfile, tofile):
+-    flags = ['-3', '--fast-fail']
++    flags = ['--3str', '--fast-fail']
+     if tofile.endswith('.cxx'):
+         flags.append('--cplus')
+
+.

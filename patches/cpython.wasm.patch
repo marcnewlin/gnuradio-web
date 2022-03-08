@@ -1,0 +1,234 @@
+diff --git a/Include/cpython/pystate.h b/Include/cpython/pystate.h
+index c37123c4f6..aa518281c8 100644
+--- a/Include/cpython/pystate.h
++++ b/Include/cpython/pystate.h
+@@ -56,7 +56,7 @@ typedef struct _err_stackitem {
+      * This ensures that the exception state is not impacted by "yields"
+      * from an except handler.
+      */
+-    PyObject *exc_value;
++    PyObject *exc_type, *exc_value, *exc_traceback;
+ 
+     struct _err_stackitem *previous_item;
+ 
+diff --git a/Lib/ctypes/__init__.py b/Lib/ctypes/__init__.py
+index b08629e8df..9f68f1ff85 100644
+--- a/Lib/ctypes/__init__.py
++++ b/Lib/ctypes/__init__.py
+@@ -128,8 +128,8 @@ class WinFunctionType(_CFuncPtr):
+     if WINFUNCTYPE.__doc__:
+         WINFUNCTYPE.__doc__ = CFUNCTYPE.__doc__.replace("CFUNCTYPE", "WINFUNCTYPE")
+ 
+-elif _os.name == "posix":
+-    from _ctypes import dlopen as _dlopen
++# elif _os.name == "posix":
++    # from _ctypes import dlopen as _dlopen
+ 
+ from _ctypes import sizeof, byref, addressof, alignment, resize
+ from _ctypes import get_errno, set_errno
+@@ -366,10 +366,11 @@ class _FuncPtr(_CFuncPtr):
+             _restype_ = self._func_restype_
+         self._FuncPtr = _FuncPtr
+ 
+-        if handle is None:
+-            self._handle = _dlopen(self._name, mode)
+-        else:
+-            self._handle = handle
++        # if handle is None:
++        #     self._handle = _dlopen(self._name, mode)
++        # else:
++        #     self._handle = handle
++        self.handle = 0
+ 
+     def __repr__(self):
+         return "<%s '%s', handle %x at %#x>" % \
+diff --git a/Makefile.pre.in b/Makefile.pre.in
+index fbd4c3a23f..515f445db7 100644
+--- a/Makefile.pre.in
++++ b/Makefile.pre.in
+@@ -719,6 +719,14 @@ clinic: check-clean-src $(srcdir)/Modules/_blake2/blake2s_impl.c
+ $(BUILDPYTHON):	Programs/python.o $(LIBRARY_DEPS)
+ 	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
+ 
++	echo "#!/usr/local/bin/node --experimental-wasm-threads" > $@.tmp && cat $@ >> $@.tmp && mv $@.tmp $@ && chmod +x $@
++	sed -i "s|___funcs_on_exit(|//___funcs_on_exit(|g" $@
++# Build the interpreter
++$(BUILDPYTHON)-static: Programs/python.o $(LIBRARY_DEPS)
++	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(STATICLIBS) $(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
++
++	echo "#!/usr/local/bin/node --experimental-wasm-threads" > $@.tmp && cat $@ >> $@.tmp && mv $@.tmp $@ && chmod +x $@
++	sed -i "s|___funcs_on_exit(|//___funcs_on_exit(|g" $@
+ platform: $(BUILDPYTHON) pybuilddir.txt
+ 	$(RUNSHARED) $(PYTHON_FOR_BUILD) -c 'import sys ; from sysconfig import get_platform ; print("%s-%d.%d" % (get_platform(), *sys.version_info[:2]))' >platform
+ 
+@@ -983,6 +991,8 @@ _bootstrap_python: $(LIBRARY_OBJS_OMIT_FROZEN) Programs/_bootstrap_python.o Modu
+ 	$(LINKCC) $(PY_LDFLAGS_NOLTO) -o $@ $(LIBRARY_OBJS_OMIT_FROZEN) \
+ 		Programs/_bootstrap_python.o Modules/getpath.o $(LIBS) $(MODLIBS) $(SYSLIBS)
+ 
++	echo "#!/usr/local/bin/node --experimental-wasm-threads" > $@.tmp && cat $@ >> $@.tmp && mv $@.tmp $@ && chmod +x $@
++	sed -i "s|___funcs_on_exit(|//___funcs_on_exit(|g" $@
+ ############################################################################
+ # Deepfreeze targets
+ 
+@@ -1150,6 +1160,8 @@ Modules/getpath_noop.o: $(srcdir)/Modules/getpath_noop.c Makefile
+ Programs/_freeze_module: Programs/_freeze_module.o Modules/getpath_noop.o $(LIBRARY_OBJS_OMIT_FROZEN)
+ 	$(LINKCC) $(PY_CORE_LDFLAGS) -o $@ Programs/_freeze_module.o Modules/getpath_noop.o $(LIBRARY_OBJS_OMIT_FROZEN) $(LIBS) $(MODLIBS) $(SYSLIBS)
+ 
++	echo "#!/usr/local/bin/node --experimental-wasm-threads" > $@.tmp && cat $@ >> $@.tmp && mv $@.tmp $@ && chmod +x $@
++	sed -i "s|___funcs_on_exit(|//___funcs_on_exit(|g" $@
+ # We manually freeze getpath.py rather than through freeze_modules
+ Python/frozen_modules/getpath.h: Modules/getpath.py $(FREEZE_MODULE_BOOTSTRAP_DEPS)
+ 	$(FREEZE_MODULE_BOOTSTRAP) getpath $(srcdir)/Modules/getpath.py Python/frozen_modules/getpath.h
+diff --git a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
+index e220496107..3956e2eaeb 100644
+--- a/Modules/_ctypes/callproc.c
++++ b/Modules/_ctypes/callproc.c
+@@ -2010,10 +2010,10 @@ PyMethodDef _ctypes_module_methods[] = {
+     {"FreeLibrary", free_library, METH_VARARGS, free_library_doc},
+     {"_check_HRESULT", check_hresult, METH_VARARGS},
+ #else
+-    {"dlopen", py_dl_open, METH_VARARGS,
+-     "dlopen(name, flag={RTLD_GLOBAL|RTLD_LOCAL}) open a shared library"},
+-    {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
+-    {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
++    // {"dlopen", py_dl_open, METH_VARARGS,
++    //  "dlopen(name, flag={RTLD_GLOBAL|RTLD_LOCAL}) open a shared library"},
++    // {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
++    // {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
+ #endif
+ #ifdef __APPLE__
+      {"_dyld_shared_cache_contains_path", py_dyld_shared_cache_contains_path, METH_VARARGS, "check if path is in the shared cache"},
+diff --git a/Modules/makesetup b/Modules/makesetup
+index 3909650ed7..029830a6df 100755
+--- a/Modules/makesetup
++++ b/Modules/makesetup
+@@ -174,6 +174,7 @@ sed -e 's/[ 	]*#.*//' -e '/^[ 	]*$/d' |
+ 			--rpath)	libs="$libs $arg"; skip=libs;;
+ 			-[A-Zl]*)	libs="$libs $arg";;
+ 			*.a)		libs="$libs $arg";;
++			*.bc)		libs="$libs $arg";;
+ 			*.so)		libs="$libs $arg";;
+ 			*.sl)		libs="$libs $arg";;
+ 			/*.o)		libs="$libs $arg";;
+diff --git a/Python/fileutils.c b/Python/fileutils.c
+index 151c6feb2e..6bc8a97923 100644
+--- a/Python/fileutils.c
++++ b/Python/fileutils.c
+@@ -1332,7 +1332,7 @@ set_inheritable(int fd, int inheritable, int raise, int *atomic_flag_works)
+     HANDLE handle;
+     DWORD flags;
+ #else
+-#if defined(HAVE_SYS_IOCTL_H) && defined(FIOCLEX) && defined(FIONCLEX)
++#if defined(HAVE_SYS_IOCTL_H) && defined(FIOCLEX_not_supported) && defined(FIONCLEX_not_supported)
+     static int ioctl_works = -1;
+     int request;
+     int err;
+@@ -1385,7 +1385,7 @@ set_inheritable(int fd, int inheritable, int raise, int *atomic_flag_works)
+ 
+ #else
+ 
+-#if defined(HAVE_SYS_IOCTL_H) && defined(FIOCLEX) && defined(FIONCLEX)
++#if defined(HAVE_SYS_IOCTL_H) && defined(FIOCLEX_not_supported) && defined(FIONCLEX_not_supported)
+     if (ioctl_works != 0 && raise != 0) {
+         /* fast-path: ioctl() only requires one syscall */
+         /* caveat: raise=0 is an indicator that we must be async-signal-safe
+diff --git a/configure b/configure
+index 9e7090c790..0fd94f067b 100755
+--- a/configure
++++ b/configure
+@@ -2146,7 +2146,7 @@ $as_echo "$ac_try_echo"; } >&5
+   (eval "$ac_link") 2>&5
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+-  test $ac_status = 0; } && { ac_try='./conftest$ac_exeext'
++  test $ac_status = 0; } && { ac_try='/usr/local/bin/node --experimental-wasm-threads ./conftest$ac_exeext'
+   { { case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+   *) ac_try_echo=$ac_try;;
+@@ -4554,7 +4554,7 @@ $as_echo "$ac_try_echo"; } >&5
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }
+-  if { ac_try='./conftest$ac_cv_exeext'
++  if { ac_try='/usr/local/bin/node --experimental-wasm-threads ./conftest$ac_cv_exeext'
+   { { case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+   *) ac_try_echo=$ac_try;;
+diff --git a/wasm/Modules/Setup.local b/wasm/Modules/Setup.local
+new file mode 100644
+index 0000000000..613a95ef9a
+--- /dev/null
++++ b/wasm/Modules/Setup.local
+@@ -0,0 +1,30 @@
++*static* 
++array arraymodule.c 
++binascii binascii.c 
++cmath cmathmodule.c 
++math mathmodule.c 
++pyexpat pyexpat.c 
++select selectmodule.c 
++unicodedata unicodedata.c 
++zlib  zlibmodule.c 
++_blake2 _blake2/blake2module.c _blake2/blake2b_impl.c _blake2/blake2s_impl.c 
++_csv _csv.c 
++_datetime _datetimemodule.c 
++_decimal _decimal/_decimal.c 
++_elementtree _elementtree.c 
++_heapq _heapqmodule.c 
++_json _json.c 
++_md5 md5module.c 
++_multibytecodec cjkcodecs/multibytecodec.c 
++_opcode _opcode.c 
++_pickle _pickle.c 
++_queue _queuemodule.c 
++_random _randommodule.c 
++_sha1 sha1module.c 
++_sha256 sha256module.c 
++_sha512 sha512module.c 
++_sha3 _sha3/sha3module.c 
++_socket socketmodule.c 
++_struct _struct.c 
++_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c -I/build/include -L/build/lib -lffi 
++
+diff --git a/wasm/config.site b/wasm/config.site
+new file mode 100644
+index 0000000000..64cee8ea75
+--- /dev/null
++++ b/wasm/config.site
+@@ -0,0 +1,36 @@
++ac_cv_func_epoll_create=no
++ac_cv_func_epoll_create1=no
++ac_cv_func_close_range=no
++ac_cv_func_sem_clockwait=no
++ac_cv_func_fdwalk=no
++ac_cv_func_fork1=no
++ac_cv_func_dlopen=no
++ac_cv_func_rtpSpawn=no
++ac_cv_func_preadv2=no
++ac_cv_func_eventfd=no
++ac_cv_func_memfd_create=no
++ac_cv_func_pwritev2=no
++ac_cv_func_sendfile=no
++ac_cv_func_chflags=no
++ac_cv_func_plock=no
++ac_cv_func_copy_file_range=no
++ac_cv_func_getgrouplist=no
++ac_cv_func_initgroups=no
++ac_cv_func_posix_spawnp=no
++ac_cv_func_sched_getparam=no
++ac_cv_func_sched_getaffinity=no
++ac_cv_func_sched_getscheduler=no
++ac_cv_func_sched_rr_get_interval=no
++ac_cv_func_sched_setaffinity=no
++ac_cv_func_sched_setparam=no
++ac_cv_func_sched_setscheduler=no
++ac_cv_func_sethostname=no
++ac_cv_func_sigaltstack=no
++ac_cv_func_splice=no
++ac_cv_func_wait3=no
++ac_cv_func_wait4=no
++ac_cv_func_wcsftime=no
++ac_cv_file__dev_ptmx=false
++ac_cv_file__dev_ptc=false
++ac_cv_have_lchflags=no
++ac_cv_header_uuid_uuid_h=no

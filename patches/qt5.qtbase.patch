@@ -1,0 +1,27 @@
+diff --git a/src/gui/kernel/qdnd.cpp b/src/gui/kernel/qdnd.cpp
+index fe766c900e..c6d315fb1d 100644
+--- a/src/gui/kernel/qdnd.cpp
++++ b/src/gui/kernel/qdnd.cpp
+@@ -105,8 +105,8 @@ Qt::DropAction QDragManager::drag(QDrag *o)
+     }
+
+     if (m_object) {
+-        qWarning("QDragManager::drag in possibly invalid state");
+-        return Qt::IgnoreAction;
++        qWarning("QDragManager::drag in possibly invalid state - DRAGGING ANYWAY #YOLO");
++        //return Qt::IgnoreAction;
+     }
+
+     m_object = o;
+diff --git a/src/plugins/platforms/wasm/qwasmscreen.cpp b/src/plugins/platforms/wasm/qwasmscreen.cpp
+index 0f9e9a5028..2cf10d1795 100644
+--- a/src/plugins/platforms/wasm/qwasmscreen.cpp
++++ b/src/plugins/platforms/wasm/qwasmscreen.cpp
+@@ -143,6 +155,7 @@ qreal QWasmScreen::devicePixelRatio() const
+     //
+     // The effective devicePixelRatio is the product of these two scale factors, upper-bounded
+     // by window.devicePixelRatio in order to avoid e.g. allocating a 10x widget backing store.
++    return qreal(1);
+     double dpr = emscripten::val::global("window")["devicePixelRatio"].as<double>();
+     emscripten::val visualViewport = emscripten::val::global("window")["visualViewport"];
+     double scale = visualViewport.isUndefined() ? 1.0 : visualViewport["scale"].as<double>();

@@ -1,0 +1,81 @@
+version: "3.0"
+
+services:
+
+  build-base:
+    image: build-base:dev
+    build:
+      context: .
+      dockerfile: dockerfiles/build-base.dockerfile
+
+  boost:
+    image: boost:dev
+    build:
+      context: ./.context/boost/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  cpython:
+    image: cpython:dev
+    build:
+      context: ./.context/cpython/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  qt5:
+    image: qt5:dev
+    build:
+      context: ./.context/qt5/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  pyqt5:
+    image: pyqt5:dev
+    build:
+      context: ./.context/pyqt5/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  numpy:
+    image: numpy:dev
+    build:
+      context: ./.context/numpy/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  volk:
+    image: volk:dev
+    build:
+      context: ./.context/volk/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  gnuradio:
+    image: gnuradio:dev
+    build:
+      context: ./.context/gnuradio/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  gnuradio-rebuild:
+    # image: gnuradio:dev
+    build:
+      context: ./.context/gnuradio-rebuild/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
+
+  qwt:
+    image: qwt:dev
+    build:
+      context: ./.context/qwt/.
+      dockerfile: dockerfile
+    volumes:
+      - ./build-output:/build-output:rw
