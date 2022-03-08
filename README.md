@@ -18,7 +18,7 @@ This is a proof-of-concept WebAssembly build of GNU Radio Companion which can ge
 
 The GNU Radio Companion UI is running the `feature-grc-qt` branch of GNU Radio, which itself is a work-in-progress, so some basic capabilities (like the ability to edit block properties) are missing.
 
-Support for USB-based software-defined radios is not yet implemented, but will be possible. (Earlier in the pandemic I published standalone WebUSB proof-of-concepts for USRP B210, HackRF, and PlutoSDR.)
+Support for USB software-defined radios is not yet implemented, but will be possible. (Earlier in the pandemic I published standalone WebUSB proof-of-concepts for USRP B210, HackRF, and PlutoSDR.)
 
 ### how to run a simple flowgraph with QT GUI visualization
 
@@ -40,3 +40,7 @@ The repo includes prebuilt binaries, but if you like watching cross-compilation 
 2. run `make base && make webapp` in the repository root
 
    (I've only tested this on an Ubuntu 20.04 x86_64 host. It probably works in other environments but YMMV.)
+
+### simple flowgraph demo
+
+https://user-images.githubusercontent.com/1245470/157148629-7316bd5b-9deb-4479-946b-1595ab1328af.mp4
