@@ -84,7 +84,7 @@ qwt: qt5
 	cp ./dockerfiles/qwt.dockerfile ./.context/qwt/dockerfile
 	docker-compose build qwt
 
-gnuradio: qt5 build-output/volk build-output/boost build-output/pyqt5 build-output/numpy build-output/qwt
+gnuradio: build-output/volk build-output/boost build-output/pyqt5 build-output/numpy build-output/qwt
 	rm -rf ./.context/gnuradio
 	mkdir -p ./.context/gnuradio
 	cp ./patches/gnuradio.patch ./.context/gnuradio/
@@ -100,8 +100,6 @@ gnuradio: qt5 build-output/volk build-output/boost build-output/pyqt5 build-outp
 	mv build-output/gnuradio/lib build-output/gnuradio/_lib
 
 gnuradio-rebuild: gnuradio
-	cp -r ./build-output2/volk-dev ./.context/gnuradio-rebuild/
-	cp build-output/volk/lib/libvolk.a ./.context/gnuradio-rebuild/volk-dev/lib/libvolk.a
 	cp -r ./scratch ./.context/gnuradio-rebuild/
 	cp ./dockerfiles/gnuradio-rebuild.dockerfile ./.context/gnuradio-rebuild/dockerfile
 	cp -r ./build-output/pyqt5/pyqt5-static ./.context/gnuradio-rebuild/
