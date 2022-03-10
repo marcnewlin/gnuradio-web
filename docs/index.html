@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0"/>
+
+    <title>python</title>
+    <style>
+      /* Make the html body cover the entire (visual) viewport with no scroll bars. */
+      html, body { padding: 0; margin: 0; overflow:hidden; height: 100vh }
+
+      body { font-family: monospace; }
+      #loading { margin-left: 1.5em; }
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas { border: 0px none; background-color: white; height:100%; width:100%;  }
+      /* The contenteditable property is set to true for the canvas in order to support
+         clipboard events. Hide the resulting focus frame and set the cursor back to
+         the default cursor. */
+      canvas { outline: 0px solid transparent; caret-color: transparent; cursor:default }
+
+      div#stdlog { z-index: 1000; float: left; }
+    </style>
+  </head>
+  <body>
+
+    <div id='loading'><h1>Loading gnuradio-web (~100mb)...</h1><h2>If you don't see any activity after 15-30 seconds, check the F12 console for details.</h2><h2>This has been tested on Chrome and Firefox on an Ubuntu host.</h2></div>
+
+    <canvas id="grc_canvas" oncontextmenu="event.preventDefault()" contenteditable="true"></canvas>
+
+    <script type="text/javascript">
+
+    var Module = {};
+
+    (async function init_python() {
+
+      Module.print = function(text) { console.log(text); let d = document.createElement("div"); d.innerText = text; document.getElementById("loading").appendChild(d); };
+      Module.printErr = function(text) { console.debug(text); let d = document.createElement("div"); d.innerText = text; document.getElementById("loading").appendChild(d); };
+
+      Module.preRun = [function() {
+        console.log("Module.preRun() called");
+        ENV.GRC_PREFS_PATH = "/lib/etc/gnuradio/conf.d/grc.conf";
+        ENV.GRC_CONF_GRC_ENABLED_COMPONENTS = "python-support;gnuradio-runtime;gnuradio-companion;gr-blocks;gr-analog;gr-digital;gr-channels;gr-fft;gr-filter;gr-qtgui";
+        ENV.GRC_CONF_GRC_GLOBAL_BLOCKS_PATH = "/lib/share/gnuradio/grc/blocks";
+        ENV.GRC_CONF_GRC_DEFAULT_FLOW_GRAPH = "/lib/test.grc";
+        ENV.XDG_CONFIG_HOME = "/home/web_user"
+      }];
+
+      var startup_script = await (await fetch("./startup.py")).text();
+      Module.arguments = ["-c", startup_script];
+
+      Module.onRuntimeInitialized = function() {
+        console.log("Module.onRuntimeInitialized() called");
+        document.getElementById("loading").style.display = 'none';
+
+        Module.qtCanvasElements = [
+          document.getElementById("grc_canvas")
+        ];
+      };
+
+      for(let s of ["./python.data.js", "./python.js"]) {
+        var t = document.createElement("script");
+        t.type = "text/javascript";
+        t.src = s;
+        document.body.appendChild(t);
+      };
+
+    })();
+
+    </script>
+
+  </body>
+</html>
