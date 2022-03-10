@@ -186,10 +186,12 @@ def run_qt(args, log):
         prefs=gr.prefs(),
         install_prefix=gr.prefix()
     )
-    model.build_library()
+    # model.build_library()
 
     # Launch GRC
     app = grc.Application(settings, model)
+    print("BEFORE INITIALIZE")
+    app.initialize()
     sys.exit(app.run())
 
 

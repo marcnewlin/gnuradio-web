@@ -99,7 +99,7 @@ gnuradio: build-output/volk build-output/boost build-output/pyqt5 build-output/n
 	docker-compose run -u 1000:1000 gnuradio cp -r /build/base/wasm /build-output/gnuradio
 	mv build-output/gnuradio/lib build-output/gnuradio/_lib
 
-gnuradio-rebuild: gnuradio
+gnuradio-rebuild: build-output/gnuradio
 	cp -r ./scratch ./.context/gnuradio-rebuild/
 	cp ./dockerfiles/gnuradio-rebuild.dockerfile ./.context/gnuradio-rebuild/dockerfile
 	cp -r ./build-output/pyqt5/pyqt5-static ./.context/gnuradio-rebuild/
@@ -117,7 +117,8 @@ gnuradio-rebuild: gnuradio
 ./build/qt5-wasm:
 	docker-compose run -u ${UID}:${UID} qt5 cp -r /opt/qt5-wasm /build/
 
-webapp: gnuradio-rebuild
+# gnuradio-rebuild
+webapp:
 
 	mkdir -p ./webapp
 
@@ -149,7 +150,11 @@ webapp: gnuradio-rebuild
 	$$EMSDK/upstream/emscripten/tools/file_packager.py \
 	python.data --preload lib --no-node --js-output=python.data.js --lz4
 
-	cp ./build-output/gnuradio/python* ./webapp/
+	cp ./build-output/gnuradio/python.data ./webapp/
+	cp ./build-output/gnuradio/python.data.js ./webapp/
+	cp ./build-output/gnuradio/python.js ./webapp/
+	cp ./build-output/gnuradio/python.wasm ./webapp/
+	cp ./build-output/gnuradio/python.worker.js ./webapp/
 
 
 

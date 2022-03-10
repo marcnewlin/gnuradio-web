@@ -20,7 +20,7 @@ RUN cd /opt/gnuradio/build && \
     -j6 install
 
 # final web config for the pytho interpreter
-RUN cd /opt/cpython/wasm && rm -f ./python && emmake make FREEZE_MODULE_BOOTSTRAP=/opt/cpython/wasm/bin/python3.11-i386 PYTHON_FOR_FREEZE=/opt/cpython/wasm/bin/python3.11-i386 FREEZE_MODULE="/opt/cpython/wasm/Programs/_freeze_module" -n python | sed "s/\-lnodefs.js \-s NODERAWFS/--bind -s USE_FREETYPE -s USE_PTHREADS -s EXPORTED_RUNTIME_METHODS=['stringToUTF16'] -s PTHREAD_POOL_SIZE_STRICT=0 -s PTHREAD_POOL_SIZE=4 -g1 --std=c++17 -s EVAL_CTORS -s LZ4=1 -O3 -s ASSERTIONS/g" | sed "s/\-s INITIAL_MEMORY=1gb//g" > /opt/cpython/wasm/python-build-command.txt
+RUN cd /opt/cpython/wasm && rm -f ./python && emmake make FREEZE_MODULE_BOOTSTRAP=/opt/cpython/wasm/bin/python3.11-i386 PYTHON_FOR_FREEZE=/opt/cpython/wasm/bin/python3.11-i386 FREEZE_MODULE="/opt/cpython/wasm/Programs/_freeze_module" -n python | sed "s/\-lnodefs.js \-s NODERAWFS/--bind -s USE_FREETYPE -s USE_PTHREADS -s EXPORTED_RUNTIME_METHODS=['stringToUTF16'] -s PTHREAD_POOL_SIZE_STRICT=0 -g1 --std=c++17 -s LZ4=1 -O3 -s ASSERTIONS/g" | sed "s/\-s INITIAL_MEMORY=1gb//g" > /opt/cpython/wasm/python-build-command.txt
 
 # prepare output directory (static assets)
 RUN cd /opt/cpython/wasm && cp -r share lib/ && cp -r etc lib/

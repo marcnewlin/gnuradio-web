@@ -135,24 +135,14 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         self.registerToolBar(toolbars["edit"])
         self.registerToolBar(toolbars["run"])
 
-        log.debug("Loading flowgraph model")
-        self.fg_view = FlowgraphView(self)
-        initial_state = self.platform.parse_flow_graph("")
-        self.fg_view.flowgraph.import_data(initial_state)
-        log.debug("Adding flowgraph view")
-        self.tabWidget = QtWidgets.QTabWidget()
-        self.tabWidget.setTabsClosable(True)
-        #TODO: Don't close if the tab has not been saved
-        self.tabWidget.tabCloseRequested.connect(lambda index: self.close_triggered(index))
-        self.tabWidget.addTab(self.fg_view, "Untitled")
-        self.setCentralWidget(self.tabWidget)
-        self.currentFlowgraph.selectionChanged.connect(self.updateActions)
-        #self.new_tab(self.flowgraph)
+        # self.new_tab(self.flowgraph)
 
     '''def show(self):
         log.debug("Showing main window")
         self.show()
     '''
+
+
 
     @property
     def currentView(self):

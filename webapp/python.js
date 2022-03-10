@@ -1194,12 +1194,7 @@ function createWasm() {
   addOnInit(Module["asm"]["__wasm_call_ctors"]);
   wasmModule = module;
   if (!ENVIRONMENT_IS_PTHREAD) {
-   var numWorkersToLoad = PThread.unusedWorkers.length;
-   PThread.unusedWorkers.forEach(function(w) {
-    PThread.loadWasmModuleToWorker(w, function() {
-     if (!--numWorkersToLoad) removeRunDependency("wasm-instantiate");
-    });
-   });
+   removeRunDependency("wasm-instantiate");
   }
  }
  if (!ENVIRONMENT_IS_PTHREAD) {
@@ -1774,10 +1769,6 @@ var PThread = {
  tlsInitFunctions: [],
  initMainThread: function() {
   assert(!ENVIRONMENT_IS_PTHREAD);
-  var pthreadPoolSize = 4;
-  for (var i = 0; i < pthreadPoolSize; ++i) {
-   PThread.allocateUnusedWorker();
-  }
  },
  initWorker: function() {},
  pthreads: {},

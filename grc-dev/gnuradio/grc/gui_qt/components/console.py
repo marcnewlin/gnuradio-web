@@ -120,7 +120,7 @@ class Console(QtWidgets.QDockWidget, base.Component):
 
         #self.setWindowTitle(_translate("", "Library", None))
         #library.headerItem().setText(0, _translate("", "Blocks", None))
-        #QtCore.QMetaObject.connectSlotsByName(blockLibraryDock)
+        # QtCore.QMetaObject.connectSlotsByName(blockLibraryDock)
 
         ### Setup actions
 

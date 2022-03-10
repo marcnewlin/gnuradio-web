@@ -9,6 +9,9 @@
     <style>
       /* Make the html body cover the entire (visual) viewport with no scroll bars. */
       html, body { padding: 0; margin: 0; overflow:hidden; height: 100vh }
+
+      body { font-family: monospace; }
+      #loading { margin-left: 1.5em; }
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
       canvas { border: 0px none; background-color: white; height:100%; width:100%;  }
       /* The contenteditable property is set to true for the canvas in order to support
@@ -20,70 +23,51 @@
     </style>
   </head>
   <body>
+
+    <div id='loading'><h1>Loading gnuradio-web (~100mb)...</h1><h2>If you don't see any activity after 15-30 seconds, check the F12 console for details.</h2><h2>This has been tested on Chrome and Firefox on an Ubuntu host.</h2></div>
+
     <canvas id="grc_canvas" oncontextmenu="event.preventDefault()" contenteditable="true"></canvas>
+
     <script type="text/javascript">
 
     var Module = {};
 
-    Module.print = function(text) { console.log(text); };
-    Module.printErr = function(text) { console.debug(text); };
+    (async function init_python() {
 
-    Module.preRun = [function() {
-      console.log("SETTING ENVIRONMENT VARIABLES");
-      ENV.GRC_PREFS_PATH = "/lib/etc/gnuradio/conf.d/grc.conf";
-      ENV.GRC_CONF_GRC_ENABLED_COMPONENTS = "python-support;gnuradio-runtime;gnuradio-companion;gr-blocks;gr-analog;gr-digital;gr-channels;gr-fft;gr-filter;gr-qtgui";
-      ENV.GRC_CONF_GRC_GLOBAL_BLOCKS_PATH = "/lib/share/gnuradio/grc/blocks";
-      ENV.GRC_CONF_GRC_DEFAULT_FLOW_GRAPH = "/lib/test.grc";
-      ENV.XDG_CONFIG_HOME = "/home/web_user"
-    }];
+      Module.print = function(text) { console.log(text); let d = document.createElement("div"); d.innerText = text; document.getElementById("loading").appendChild(d); };
+      Module.printErr = function(text) { console.debug(text); let d = document.createElement("div"); d.innerText = text; document.getElementById("loading").appendChild(d); };
 
-    var canvas = document.getElementById("grc_canvas");
+      Module.preRun = [function() {
+        console.log("Module.preRun() called");
+        ENV.GRC_PREFS_PATH = "/lib/etc/gnuradio/conf.d/grc.conf";
+        ENV.GRC_CONF_GRC_ENABLED_COMPONENTS = "python-support;gnuradio-runtime;gnuradio-companion;gr-blocks;gr-analog;gr-digital;gr-channels;gr-fft;gr-filter;gr-qtgui";
+        ENV.GRC_CONF_GRC_GLOBAL_BLOCKS_PATH = "/lib/share/gnuradio/grc/blocks";
+        ENV.GRC_CONF_GRC_DEFAULT_FLOW_GRAPH = "/lib/test.grc";
+        ENV.XDG_CONFIG_HOME = "/home/web_user"
+      }];
 
-    Module.onRuntimeInitialized = function() {
-      Module.qtCanvasElements = [canvas];
-    };
+      var startup_script = await (await fetch("./startup.py")).text();
+      Module.arguments = ["-c", startup_script];
 
-    Module.arguments = [
-        "-c",
-`
-import sys, logging, time
-logging.basicConfig(level=logging.DEBUG)
+      Module.onRuntimeInitialized = function() {
+        console.log("Module.onRuntimeInitialized() called");
+        document.getElementById("loading").style.display = 'none';
 
-import os
-os.makedirs("/home/web_user/.gnuradio/prefs", exist_ok=True)
-with open("/home/web_user/.gnuradio/config.conf", "w") as f_out:
-  with open("/lib/etc/gnuradio/conf.d/grc.conf", "r") as f_in:
-    f_out.write(f_in.read())
-with open("/home/web_user/.gnuradio/prefs/vmcircbuf_default_factory", "w") as f_out:
-  f_out.write("gr::vmcircbuf_mmap_tmpfile_factory")
+        Module.qtCanvasElements = [
+          document.getElementById("grc_canvas")
+        ];
+      };
 
-os.makedirs("/home/web_user/.cache/grc_gnuradio", exist_ok=True)
-with open("/lib/python3.11/site-packages/gnuradio/cache_v2.json", "r") as f:
-  with open("/home/web_user/.cache/grc_gnuradio/cache_v2.json", "w") as ff:
-    ff.write(f.read())
+      for(let s of ["./python.data.js", "./python.js"]) {
+        var t = document.createElement("script");
+        t.type = "text/javascript";
+        t.src = s;
+        document.body.appendChild(t);
+      };
 
+    })();
 
-
-for m in ['sip', 'QtCore', 'QtGui', 'QtWidgets', 'QtSvg']:
-  name = 'PyQt5.%s' % m
-  sys.modules[name] = __import__(m)
-  print(sys.modules[name])
-
-import QtCore
-import QtWidgets
-QtCore.Qt.QWidget = QtWidgets.QWidget
-QtCore.Qt.QTimer = QtCore.QTimer
-sys.modules['PyQt5.Qt'] = QtCore.Qt
-
-# GRC entrypoint
-from gnuradio.grc import main as _main
-_main.main()
-sys.exit(0)
-`];
     </script>
-
-    <script type="text/javascript" src="python.data.js"></script>
-    <script type="text/javascript" src="python.js"></script>
 
   </body>
 </html>
