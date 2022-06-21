@@ -7,7 +7,7 @@ COPY ./cpython /opt/cpython
 RUN CFLAGS="" LDFLAGS="" /opt/cpython/i386/bin/pip3 install PyQt-builder PyQt5-sip
 
 # install cpython/wasm32 build-dependencies for PyQt5
-RUN for PACKAGE in pyparsing packaging toml sip PyQt-builder PyQt5-sip; do \
+RUN for PACKAGE in pyparsing packaging toml sip ply PyQt-builder PyQt5-sip; do \
       CFLAGS="${CFLAGS} -shared" \
       /opt/cpython/wasm/bin/python3.11-i386 \
       -m pip install \
