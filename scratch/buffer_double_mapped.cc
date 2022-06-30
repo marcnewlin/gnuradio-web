@@ -124,6 +124,7 @@ bool buffer_double_mapped::allocate_buffer(int nitems)
     }
 
     d_base = (char *)malloc(buffer_size*2);
+    printf("d_base: %d\n", d_base);
     assert(d_base>0);
 
     // d_vmcircbuf.reset(gr::vmcircbuf_sysconfig::make(d_bufsize * d_sizeof_item));

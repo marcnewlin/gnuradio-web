@@ -18,7 +18,7 @@
 #include <gnuradio/buffer_reader.h>
 #include <gnuradio/buffer_single_mapped.h>
 #include <gnuradio/buffer_type.h>
-#include <gnuradio/integer_math.h>
+// #include <gnuradio/integer_math.h>
 #include <gnuradio/math.h>
 #include <algorithm>
 #include <cassert>
@@ -114,6 +114,7 @@ buffer_sptr make_buffer(int nitems,
 
 buffer::~buffer()
 {
+    printf("readers size %llu\n", d_readers.size());
     assert(d_readers.size() == 0);
     s_buffer_count--;
 }

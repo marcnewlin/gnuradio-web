@@ -4,17 +4,19 @@ FROM qt5:dev
 COPY ./cpython /opt/cpython
 
 # install cpython/i386 build-dependencies for PyQt5
-RUN CFLAGS="" LDFLAGS="" /opt/cpython/i386/bin/pip3 install PyQt-builder PyQt5-sip
+RUN CFLAGS="" LDFLAGS="" /opt/cpython/i386/bin/pip3 install pyparsing==3.0.7 packaging==21.3 toml==0.10.2 sip==6.5.1 PyQt-builder==1.12.2 PyQt5-sip==12.9.1
 
 # install cpython/wasm32 build-dependencies for PyQt5
-RUN for PACKAGE in pyparsing packaging toml sip ply PyQt-builder PyQt5-sip; do \
+RUN for PACKAGE in pyparsing==3.0.7 packaging==21.3 toml==0.10.2 sip==6.5.1 PyQt-builder==1.12.2 PyQt5-sip==12.9.1; do \
       CFLAGS="${CFLAGS} -shared" \
       /opt/cpython/wasm/bin/python3.11-i386 \
       -m pip install \
       --no-deps \
+      --no-cache-dir \
       --no-binary $PACKAGE \
       $PACKAGE; \
     done
+
 
 # download and patch PyQt5
 RUN mkdir -p /opt/pyqt5 && \

@@ -1,7 +1,8 @@
 FROM build-base:dev
 
 # pull down the qt5 repos
-RUN git clone --depth=1 --branch=5.15 https://github.com/qt/qt5.git /opt/qt5 && \
+RUN git clone --branch=5.15 https://github.com/qt/qt5.git /opt/qt5 && \
+    cd /opt/qt5 && git checkout b78a4dc89344bd3069f75496b5978500ed124828 && \
     cd /opt/qt5 && git submodule update --init --recursive
 
 # configure

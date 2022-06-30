@@ -23,7 +23,8 @@ RUN cd /opt/cpython/i386 && make -j install
 RUN /opt/cpython/i386/bin/python3.11 -m pip install --upgrade pip
 
 # build/install libffi-emscripten
-RUN git clone --depth=1 https://github.com/hoodmane/libffi-emscripten /opt/libffi-emscripten
+RUN git clone https://github.com/hoodmane/libffi-emscripten /opt/libffi-emscripten && \
+    cd /opt/libffi-emscripten && git checkout 1fd79801595a43e26b65b59030a9040ba124ee24
 RUN cd /opt/libffi-emscripten && ./build.sh
 RUN mkdir -p /build/libffi-emscripten && cp -r /opt/libffi-emscripten/target/* /build/
 

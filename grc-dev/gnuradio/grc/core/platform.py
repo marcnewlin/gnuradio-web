@@ -191,7 +191,7 @@ class Platform(Element):
                 "'options' block). Ensure your GRC block paths are correct "
                 "and at least one points to your prefix installation:"
             )
-            errstr = "\n".join([errstr] + (path or self.config.block_paths))
+            errstr = "\n".join([errstr, path])
             raise RuntimeError(errstr)
         else:
             # might have some cleanup to do on the options block in particular

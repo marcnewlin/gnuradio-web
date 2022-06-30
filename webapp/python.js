@@ -13742,9 +13742,9 @@ var stackRestore = Module["stackRestore"] = createExportWrapper("stackRestore");
 
 var stackAlloc = Module["stackAlloc"] = createExportWrapper("stackAlloc");
 
-var __emscripten_main_thread_futex = Module["__emscripten_main_thread_futex"] = 11386048;
+var __emscripten_main_thread_futex = Module["__emscripten_main_thread_futex"] = 11394400;
 
-var __emscripten_allow_main_runtime_queued_calls = Module["__emscripten_allow_main_runtime_queued_calls"] = 10547416;
+var __emscripten_allow_main_runtime_queued_calls = Module["__emscripten_allow_main_runtime_queued_calls"] = 10555736;
 
 function invoke_iiiii(index, a1, a2, a3, a4) {
  var sp = stackSave();

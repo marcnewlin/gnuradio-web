@@ -5,26 +5,29 @@ RUN /opt/cpython/wasm/bin/python3.11-i386 \
     -m pip install --no-deps --no-binary pybind11 pybind11
 
 # build and install mpir
-RUN git clone --depth=1 https://github.com/wbhart/mpir.git /opt/mpir && \
-    cd /opt/mpir && git submodule update --init --recursive && \
+RUN git clone https://github.com/wbhart/mpir.git /opt/mpir && \
+    cd /opt/mpir && git checkout b3367eb13eca95b3a204beaca5281a2c3b4c66a6 && \
+    git submodule update --init --recursive && \
     cd /opt/mpir && mv -f config.guess configmpir.guess && mv -f config.sub configmpir.sub && emconfigure autoreconf -isv && \
     cd /opt/mpir && emconfigure ./configure CFLAGS="${CFLAGS}" --prefix=/build/ --disable-static --enable-cxx --enable-gmpcompat --host=wasm32 && \
     echo "#undef HAVE_OBSTACK_VPRINTF" >> /opt/mpir/config.h && \
     cd /opt/mpir && emmake make -j install
-
-# build and install libfmt
-RUN git clone https://github.com/fmtlib/fmt.git /opt/fmt
-RUN cd /opt/fmt && \
-    git checkout ea3d326c636a8bb22cec94ebc75273982548143a && \
-    mkdir -p /opt/fmt/build
-RUN cd /opt/fmt/build && emcmake cmake -DCMAKE_INSTALL_PREFIX=/build -DFMT_TEST=OFF ../
-RUN cd /opt/fmt/build && emmake make LDFLAGS="${LDFLAGS} --std=c++17 -s EXPORT_ALL" -j install
+#
+# # build and install libfmt
+# RUN git clone https://github.com/fmtlib/fmt.git /opt/fmt
+# RUN cd /opt/fmt && \
+#     git checkout c65e4286bf862c76e8c2e60b1f92c0edf7d52e31 && \
+#     mkdir -p /opt/fmt/build
+# RUN cd /opt/fmt/build && emcmake cmake -DCMAKE_INSTALL_PREFIX=/build -DFMT_TEST=OFF ../
+# RUN cd /opt/fmt/build && emmake make LDFLAGS="${LDFLAGS} --std=c++17 -s EXPORT_ALL" -j install
 
 # build and install libspdlog
-RUN git clone --depth=1 https://github.com/gabime/spdlog.git /opt/spdlog
+RUN git clone https://github.com/gabime/spdlog.git /opt/spdlog && \
+    cd /opt/spdlog && git checkout d7690d8e7eed721d78b52e032e996a5d1ef47d6f
 RUN cd /opt/spdlog && git submodule update --init --recursive
 RUN mkdir -p /opt/spdlog/build
-RUN cd /opt/spdlog/build && emcmake cmake -DSPDLOG_FMT_EXTERNAL=ON -Dfmt_DIR=/build/lib/cmake/fmt -DCMAKE_CXX_FLAGS="${CFLAGS} -pthread" -DCMAKE_INSTALL_PREFIX=/build -DSPDLOG_BUILD_EXAMPLE=OFF ../
+# RUN cd /opt/spdlog/build && emcmake cmake -DSPDLOG_FMT_EXTERNAL=ON -Dfmt_DIR=/build/lib/cmake/fmt -DCMAKE_CXX_FLAGS="${CFLAGS} -pthread" -DCMAKE_INSTALL_PREFIX=/build -DSPDLOG_BUILD_EXAMPLE=OFF ../
+RUN cd /opt/spdlog/build && emcmake cmake -DSPDLOG_FMT_EXTERNAL=OFF -DCMAKE_CXX_FLAGS="${CFLAGS} -pthread" -DCMAKE_INSTALL_PREFIX=/build -DSPDLOG_BUILD_EXAMPLE=OFF ../
 RUN cd /opt/spdlog/build && emmake make -j install
 
 # install volk (built by volk.dockerfile)
@@ -103,7 +106,8 @@ RUN for PACKAGE in markupsafe mako six packaging; do \
 
 # grab the GNU Radio source from github
 # - branch: feature-qt-gui
-RUN git clone --depth=1 --branch=feature-grc-qt https://github.com/gnuradio/gnuradio.git /opt/gnuradio && \
+RUN git clone --branch=feature-grc-qt https://github.com/gnuradio/gnuradio.git /opt/gnuradio && \
+    cd /opt/gnuradio && git checkout 739103692cfdc4dbd74c304a0443a0e896b1112d && \
     cd /opt/gnuradio && git submodule update --init --recursive
 
 # build/install fftw3f
@@ -111,6 +115,9 @@ RUN cd /opt && wget http://fftw.org/fftw-3.3.10.tar.gz && tar -xf fftw-3.3.10.ta
 RUN cd /opt/fftw-3.3.10 && \
     emconfigure ./configure --prefix=/build --host=wasm32 --with-slow-timer --enable-float && \
     emmake make -j6 install
+
+RUN     cd /opt/gnuradio && git checkout bb2f782e755fd08d03316a4cf43094c10ed7eb23 && \
+    cd /opt/gnuradio && git submodule update --init --recursive
 
 # patch GNU Radio
 ADD ./gnuradio.patch /opt/gnuradio/gnuradio.patch
@@ -205,7 +212,6 @@ echo "gr_python \
 /build/lib/libspdlog.a \
 /build/lib/libboost_thread.a \
 /opt/cpython/wasm/lib/libgnuradio-runtime.a \
-/build/lib/libfmt.a \
 /build/lib/libmpir.a" >> /opt/cpython/wasm/Modules/Setup.local && \
 echo "blocks_python \
 /opt/cpython/wasm/lib/python3.11/site-packages/gnuradio/blocks/blocks_python.cpython-311.bc \

@@ -4,7 +4,8 @@ FROM cpython:dev
 RUN /opt/cpython/wasm/bin/python3.11-i386 -m pip install mako
 
 # clone
-RUN git clone --depth=1 https://github.com/gnuradio/volk.git /opt/volk
+RUN git clone https://github.com/gnuradio/volk.git /opt/volk && \
+    cd /opt/volk && git checkout ce4e4a00fc953f3451bfcdd4310b03785d8b4055
 RUN cd /opt/volk && git submodule update --init --recursive
 
 # configure
