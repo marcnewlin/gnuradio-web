@@ -107,7 +107,6 @@ RUN for PACKAGE in markupsafe mako six packaging; do \
 # grab the GNU Radio source from github
 # - branch: feature-qt-gui
 RUN git clone --branch=feature-grc-qt https://github.com/gnuradio/gnuradio.git /opt/gnuradio && \
-    cd /opt/gnuradio && git checkout 739103692cfdc4dbd74c304a0443a0e896b1112d && \
     cd /opt/gnuradio && git submodule update --init --recursive
 
 # build/install fftw3f
@@ -163,6 +162,7 @@ RUN mkdir -p /opt/gnuradio/build && \
     -DQt5EglSupport_DIR=/build/lib/cmake/Qt5EglSupport \
     -DQt5Zlib_DIR=/build/lib/cmake/Qt5Zlib \
     -DQt5EventDispatcherSupport_DIR=/build/lib/cmake/Qt5EventDispatcherSupport \
+    -DQt5Svg_DIR=/build/lib/cmake/Qt5Svg \
     -DQWT_INCLUDE_DIRS=/build/include \
     -DFFTW3f_INCLUDE_DIRS=/build/include \
     -DBoost_NO_SYSTEM_PATHS=ON \
