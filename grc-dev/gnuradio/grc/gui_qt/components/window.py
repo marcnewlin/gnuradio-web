@@ -108,7 +108,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         self.createMenus(self.actions, self.menus)
         self.createToolbars(self.actions, self.toolbars)
         self.connectSlots()
-
+        self.clipboard = None 
 
         ### Rest of the GUI widgets
 
@@ -283,8 +283,8 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         actions['preferences'] = Action(Icons('preferences-system'), _("preferences"), self,
                                         statusTip=_("preferences-tooltip"))
 
+        actions['save'].setEnabled(True)
         # Disable some actions, by default
-        actions['save'].setEnabled(False)
         actions['undo'].setEnabled(False)
         actions['redo'].setEnabled(False)
         actions['cut'].setEnabled(False)
@@ -483,6 +483,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
     def new_tab(self, flowgraph):
         self.setCentralWidget(flowgraph)
 
+    # Only return file open path
     def open(self):
         Open = QtWidgets.QFileDialog.getOpenFileName
         filename, filtr = Open(self, self.actions['open'].statusTip(),
@@ -490,10 +491,10 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         print(Open)
         print(filename)
         print(filtr)
-        filename = "/lib/test.grc"
         log.debug("filename: %s" % filename)
         return filename
 
+    # Only return file save name
     def save(self):
         Save = QtWidgets.QFileDialog.getSaveFileName
         filename, filtr = Save(self, self.actions['save'].statusTip(),
@@ -534,10 +535,17 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
     # Action Handlers
     def new_triggered(self):
         log.debug('new file')
+        # TODO: add new_page method
+        # new_flow_graph = self.new_page()
+        # self.new_tab(self, new_flow_graph)
+        
 
     def open_triggered(self):
         log.debug('open')
-        filename = self.open()
+        try:
+            filename = self.open()
+        except:
+            log.error("Get opening flowgraph path fail")
 
         if filename:
             log.info("Opening flowgraph ({0})".format(filename))
@@ -547,9 +555,19 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
             self.tabWidget.setCurrentIndex(self.tabWidget.count() - 1)
             self.currentFlowgraph.import_data(initial_state)
             self.currentFlowgraph.selectionChanged.connect(self.updateActions)
+        else:
+            log.info("Opening flowgraph fail due to empty filename")
 
     def save_triggered(self):
         log.debug('save')
+        if self.file_path:
+            self.platform.save_flow_graph(self.file_path, self.fg_view)
+        else:
+            log.info("undefined file path, turn to save as specific path")
+            try:
+                save_as_triggered(self)
+            except:
+                log.error("Save flowgraph fail")
 
     def save_as_triggered(self):
         log.debug('save as')
@@ -596,9 +614,12 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
 
     def copy_triggered(self):
         log.debug('copy')
-
+        # self.clipboard = self.currentFlowgraph.copy_to_clipboard()
     def paste_triggered(self):
         log.debug('paste')
+        # if self.clipboard
+        #     self.currentFlowgraph.paste_from_clipboard(self.clipboard)
+        #     self.updateActions()
 
     def delete_triggered(self):
         log.debug('delete')
