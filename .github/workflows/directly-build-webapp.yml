@@ -1,0 +1,28 @@
+
+name: Build ubuntu:base image
+on: push
+jobs:
+ build-project:
+  name: Build Project
+  runs-on: ubuntu-20.04
+  steps:
+  - uses: actions/checkout@v3
+  - name: Checkout code and Build image
+    run: | 
+      git clone --branch=3.1.1 --depth=1 https://github.com/emscripten-core/emsdk.git 
+      cd emsdk 
+      ./emsdk install 3.1.1
+      ./emsdk activate 3.1.1
+      source "/home/runner/work/gnuradio-web/gnuradio-web/emsdk/emsdk_env.sh"
+
+      cd ../
+      
+      git clone --branch=patch-2 --depth=1 https://github.com/haakov/gnuradio-web.git haakov_gnuradio
+      cd haakov_gnuradio
+      sed -i 's/\/usr\/lib\//\/home\/runner\/work\/gnuradio-web\/gnuradio-web\/emsdk\/upstream\//g' Makefile
+      
+      docker pull eat4toast/build-base:dev 		
+      docker tag eat4toast/build-base:dev build-base:dev
+      
+      make cpython
+      make webapp
