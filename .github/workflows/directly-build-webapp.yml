@@ -14,13 +14,15 @@ jobs:
       ./emsdk install 3.1.1
       ./emsdk activate 3.1.1
       source "/home/runner/work/gnuradio-web/gnuradio-web/emsdk/emsdk_env.sh"
-      echo $$EMSDK
-      cd ..
+
+      cd ../
       
-      docker pull eat4toast/build-base:dev 		# step1: pull build-base:dev image from docker hub
+      git clone --branch=patch-2 --depth=1 https://github.com/haakov/gnuradio-web.git haakov_gnuradio
+      cd haakov_gnuradio
+      sed -i 's/\/usr\/lib\//\/home\/runner\/work\/gnuradio-web\/gnuradio-web\/emsdk\/upstream\//g' Makefile
+      
+      docker pull eat4toast/build-base:dev 		
       docker tag eat4toast/build-base:dev build-base:dev
       
-      # step2: here we temporary using Håkon's patch in gr-web building
-      git clone --branch=patch-2 --depth=1 https://github.com/haakov/gnuradio-web.git 
-      cd haakov_gnuradio
+
       make webapp
