@@ -16,7 +16,4 @@ jobs:
       username: ${{ secrets.DOCKER_USERNAME }}
       password: ${{ secrets.DOCKER_PASSWORD }}
   - name: Publish to Docker Hub
-    uses: docker/build-push-action@v3
-    with:
-        push: true
-        tags: eat4toast/build-base:dev
+    run: docker push eat4toast/build-base:dev
