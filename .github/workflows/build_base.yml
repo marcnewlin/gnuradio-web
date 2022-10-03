@@ -7,7 +7,6 @@ jobs:
   steps:
   - uses: actions/checkout@v3
   - name: Checkout code and publish from make
-    working-directory: ./gnuradio
     run: make base
   - name: Publish to Docker Hub
     uses: docker/build-push-action@v3
