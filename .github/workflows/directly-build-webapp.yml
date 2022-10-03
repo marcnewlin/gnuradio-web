@@ -1,3 +1,4 @@
+
 name: Build ubuntu:base image
 on: push
 jobs:
@@ -8,8 +9,7 @@ jobs:
   - uses: actions/checkout@v3
   - name: Checkout code and Build image
     run: | 
-# step0: prepare some dependency package
-      echo "{EMSDK_VER}={3.1.1}" >> $GITHUB_ENV
+      echo "{EMSDK_VER}={3.1.1}" >> $GITHUB_ENV 	# step0: prepare some dependency package
       git clone --branch=${{ env.EMSDK_VER }} --depth=1 https://github.com/emscripten-core/emsdk.git 
       cd emsdk 
       ./emsdk install ${{ env.EMSDK_VER }}
@@ -18,11 +18,11 @@ jobs:
       mkdir -p /usr/lib/
       cp -r emscripten /usr/lib/
       cd ../..
-# step1: pull build-base:dev image from docker hub
-      docker pull eat4toast/build-base:dev
+
+      docker pull eat4toast/build-base:dev 		# step1: pull build-base:dev image from docker hub
       docker tag eat4toast/build-base:dev build-base:dev
       
-# step2: here we temporary using Håkon's patch in gr-web building
-      git clone --branch=patch-2 --depth=1 https://github.com/haakov/gnuradio-web.git
+      # step2: here we temporary using Håkon's patch in gr-web building
+      git clone --branch=patch-2 --depth=1 https://github.com/haakov/gnuradio-web.git 
       cd haakov_gnuradio
       make webapp
