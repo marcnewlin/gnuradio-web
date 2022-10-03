@@ -9,7 +9,7 @@ jobs:
   - name: Checkout code and Build image
     run: | 
       make base
-      docker tag build-base:dev ${{ secrets.DOCKERHUB_USERNAME }}/build-base:dev
+      docker tag build-base:dev eat4toast/build-base:dev
   - name: Login to DockerHub
     uses: docker/login-action@v2
     with:
