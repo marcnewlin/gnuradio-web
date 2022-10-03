@@ -13,8 +13,8 @@ jobs:
       cd emsdk 
       ./emsdk install 3.1.1
       ./emsdk activate 3.1.1
-      mkdir -p /usr/lib/
-      cp -r ./upstream/emscripten /usr/lib/
+      source "/home/runner/work/gnuradio-web/gnuradio-web/emsdk/emsdk_env.sh"
+      echo $$EMSDK
       cd ..
       
       docker pull eat4toast/build-base:dev 		# step1: pull build-base:dev image from docker hub
